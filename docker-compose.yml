@@ -15,3 +15,41 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_VHOST: /
+      RABBITMQ_EXCHANGE: fantasy.news.topic
+    command: ["python", "-m", "news_eda.main_producer", "--count", "10", "--interval", "2"]
+    restart: "no"
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_VHOST: /
+      RABBITMQ_EXCHANGE: fantasy.news.topic
+    command: ["python", "-m", "news_eda.main_consumer", "--name", "compose-consumer", "--topic", "kingdom.politics", "--topic", "arena.sports"]
+    restart: unless-stopped

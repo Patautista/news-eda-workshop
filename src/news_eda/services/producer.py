@@ -10,13 +10,19 @@ class FantasyNewsProducer:
         self._generator = generator
         self._broker = broker
 
-    def generate_and_publish(self, topic: str) -> NewsEvent:
+    def create_event(self, topic: str) -> NewsEvent:
         article = self._generator.generate(topic)
-        event = NewsEvent.create(
+        return NewsEvent.create(
             topic=topic,
             title=article["title"],
             body=article["body"],
             source=article["source"],
         )
-        self._broker.publish(routing_key=topic, message=event.to_json())
+
+    def publish_event(self, event: NewsEvent) -> None:
+        self._broker.publish(routing_key=event.topic, message=event.to_json())
+
+    def generate_and_publish(self, topic: str) -> NewsEvent:
+        event = self.create_event(topic)
+        self.publish_event(event)
         return event
