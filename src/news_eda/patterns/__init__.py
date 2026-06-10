@@ -1,0 +1,1 @@
+"""Reliability patterns used by the workshop application."""

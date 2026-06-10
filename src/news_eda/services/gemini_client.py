@@ -1,10 +1,8 @@
 from __future__ import annotations
-
+from google import genai
 import json
 import random
 import re
-
-import google.generativeai as genai
 
 from ..config import GeminiSettings
 
@@ -12,13 +10,12 @@ from ..config import GeminiSettings
 class GeminiNewsGenerator:
     def __init__(self, settings: GeminiSettings) -> None:
         self._settings = settings
-        self._model = None
+        self._client = None
         if settings.api_key:
-            genai.configure(api_key=settings.api_key)
-            self._model = genai.GenerativeModel(settings.model)
+            self._client = genai.Client(api_key=settings.api_key)
 
     def generate(self, topic: str) -> dict[str, str]:
-        if self._model is None:
+        if self._client is None:
             return self._fallback(topic)
 
         prompt = (
@@ -28,7 +25,10 @@ class GeminiNewsGenerator:
             + '". Keep it family-safe and under 90 words in the body.'
         )
 
-        response = self._model.generate_content(prompt)
+        response = self._client.models.generate_content(
+            model=self._settings.model,
+            contents=prompt,
+        )
         text = (response.text or "").strip()
 
         try:

@@ -5,6 +5,7 @@ import random
 import time
 
 from .config import AppSettings
+from .patterns.outbox import InMemoryOutbox, OutboxPublisher
 from .services.gemini_client import GeminiNewsGenerator
 from .services.messaging import RabbitMQTopicClient
 from .services.producer import FantasyNewsProducer
@@ -59,7 +60,9 @@ def main() -> None:
     settings = AppSettings()
     broker = RabbitMQTopicClient(settings.rabbitmq)
     generator = GeminiNewsGenerator(settings.gemini)
-    producer = FantasyNewsProducer(generator=generator, broker=broker)
+    outbox = InMemoryOutbox()
+    producer = FantasyNewsProducer(generator=generator, outbox=outbox)
+    publisher = OutboxPublisher(outbox=outbox, broker=broker)
 
     try:
         for index in range(1, args.count + 1):
@@ -68,23 +71,27 @@ def main() -> None:
 
             if random.random() < args.drop_chance:
                 print(
-                    "Dropped intended publish: "
+                    "Queued in outbox without publish attempt: "
                     f"seq={index} topic={event.topic} id={event.id} title={event.title}"
                 )
                 time.sleep(args.interval)
                 continue
 
-            producer.publish_event(event)
-            print(f"Published: seq={index} topic={event.topic} id={event.id} title={event.title}")
-
+            publish_duplicates = set()
             if random.random() < args.duplicate_chance:
-                producer.publish_event(event)
-                print(
-                    "Published duplicate: "
-                    f"seq={index} topic={event.topic} id={event.id} title={event.title}"
-                )
+                publish_duplicates.add(event.id)
+
+            published_messages = publisher.publish_pending(duplicate_message_ids=publish_duplicates)
+            for message in published_messages:
+                print(f"Published from outbox: seq={index} topic={message.topic} id={message.id}")
+                if message.id in publish_duplicates:
+                    print(f"Published duplicate from outbox: seq={index} topic={message.topic} id={message.id}")
 
             time.sleep(args.interval)
+
+        remaining_messages = publisher.publish_pending()
+        for message in remaining_messages:
+            print(f"Recovered pending outbox message: topic={message.topic} id={message.id}")
     finally:
         broker.close()
 

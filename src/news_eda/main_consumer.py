@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 
 from .config import AppSettings
+from .patterns.inbox import InMemoryInbox
 from .services.consumer import TopicNewsConsumer
 from .services.messaging import RabbitMQTopicClient
 from .topics import KNOWN_TOPICS
@@ -27,7 +28,13 @@ def main() -> None:
 
     settings = AppSettings()
     broker = RabbitMQTopicClient(settings.rabbitmq)
-    consumer = TopicNewsConsumer(name=args.name, topic_patterns=args.topics, broker=broker)
+    inbox = InMemoryInbox()
+    consumer = TopicNewsConsumer(
+        name=args.name,
+        topic_patterns=args.topics,
+        broker=broker,
+        inbox=inbox,
+    )
 
     try:
         consumer.start()
