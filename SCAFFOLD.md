@@ -10,23 +10,23 @@ Infrastructure, config, and RabbitMQ/Gemini adapters are given as-is. The files 
 
 | File | What is missing |
 |---|---|
-| `patterns/inbox.py` | `has_processed` and `mark_processed` method bodies |
-| `patterns/outbox.py` | `add_event`, `pending`, `mark_published`, and `publish_pending` method bodies |
 | `services/producer.py` | The call that adds the created event to the outbox before returning |
-| `services/consumer.py` | The inbox duplicate check in `_on_message`, and marking the event processed after handling |
+| `services/consumer.py` | The inbox duplicate check in `_on_message`, mark-processed sequencing, and explicit failure-injection TODO checkpoints |
 | `main_consumer.py` | Instantiation of `InMemoryInbox` and `TopicNewsConsumer`, and calling `consumer.start()` |
 | `main_producer.py` | Instantiation of `InMemoryOutbox`, `FantasyNewsProducer`, and `OutboxPublisher`; the event creation and publish loop; flush on shutdown |
+| `patterns/inbox.py` | `has_processed` and `mark_processed` method bodies |
+| `patterns/outbox.py` | `add_event`, `pending`, `mark_published`, and `publish_pending` method bodies |
 
 ---
 
 ## Recommended order
 
-1. `patterns/inbox.py` — simplest; establish the deduplication concept
-2. `patterns/outbox.py` — three cooperating pieces; understand why publisher is separate from storage
-3. `services/producer.py` — one insertion; confirm the producer has no knowledge of the broker
-4. `services/consumer.py` — two insertions in `_on_message`; order matters
-5. `main_consumer.py` — wiring only
-6. `main_producer.py` — wiring plus error handling and flush-on-shutdown
+1. `services/consumer.py` — implement handler flow and failure checkpoints
+2. `services/producer.py` — keep producer focused on event creation
+3. `main_consumer.py` — wire dependencies and start the runtime
+4. `main_producer.py` — implement the basic publish loop first, then insert failure points to motivate outbox/inbox patterns
+5. `patterns/inbox.py` — finalize dedup state behavior
+6. `patterns/outbox.py` — finalize pending/published lifecycle and publishing orchestration
 
 ---
 

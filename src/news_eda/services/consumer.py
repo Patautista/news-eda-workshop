@@ -33,10 +33,12 @@ class TopicNewsConsumer:
         )
 
     def _on_message(self, ch: Any, method: Any, _properties: Any, body: bytes) -> None:
+        # TODO: artificial failure point A: raise before deserialize to simulate malformed transport payloads.
         event = NewsEvent.from_json(body)
 
         # TODO: check if this event has already been processed using self._inbox
         # If it has, print a skip message, ack the broker message, and return early.
+        # TODO: artificial failure point B: raise after deserialize but before dedup to test retry/redelivery behavior.
 
         print(
             f"[{self._name}] {event.created_at} | topic={event.topic} | "
@@ -45,4 +47,6 @@ class TopicNewsConsumer:
         print(f"[{self._name}] {event.body}\n")
 
         # TODO: mark the event as processed in the inbox
+        # TODO: artificial failure point C: raise after business handling but before mark_processed.
+        # TODO: artificial failure point D: raise after mark_processed but before ack to test idempotent redelivery.
         ch.basic_ack(delivery_tag=method.delivery_tag)
