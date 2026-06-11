@@ -22,7 +22,8 @@ class RabbitMQSettings:
 @dataclass(frozen=True)
 class GeminiSettings:
     api_key: str = os.getenv("GEMINI_API_KEY", "")
-    model: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    model: str = os.getenv("GEMINI_MODEL", "gemini-3.0-flash")
+    language: str = os.getenv("GEMINI_LANGUAGE", "english")
 
 
 @dataclass(frozen=True)

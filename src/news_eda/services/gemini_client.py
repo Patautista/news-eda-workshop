@@ -22,7 +22,8 @@ class GeminiNewsGenerator:
             "Create one short fictional news item in valid JSON with keys "
             'title, body, source. Topic: "'
             + topic
-            + '". Keep it family-safe and under 90 words in the body.'
+            + '". Keep it family-safe and under 90 words in the body. '
+            f'Write in {self._settings.language}.'
         )
 
         response = self._client.models.generate_content(
