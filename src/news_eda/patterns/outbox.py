@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import random
-import time
-from uuid import uuid4
 
 from ..models import NewsEvent
-from ..services.messaging import RabbitMQTopicClient
+from ..services.faulty_client import FaultyRabbitClient
 
 
 @dataclass
 class OutboxMessage:
-    entry_id: str
     id: str
     topic: str
     payload: str
@@ -25,7 +21,6 @@ class InMemoryOutbox:
     def add_event(self, event: NewsEvent) -> None:
         self._messages.append(
             OutboxMessage(
-                entry_id=str(uuid4()),
                 id=event.id,
                 topic=event.topic,
                 payload=event.to_json(),
@@ -35,36 +30,30 @@ class InMemoryOutbox:
     def pending(self) -> list[OutboxMessage]:
         return [message for message in self._messages if not message.published]
 
-    def mark_published(self, entry_id: str) -> None:
+    def mark_published(self, message_id: str) -> None:
         for message in self._messages:
-            if message.entry_id == entry_id:
+            if message.id == message_id:
                 message.published = True
                 return
 
 
 class OutboxPublisher:
-    def __init__(self, outbox: InMemoryOutbox, broker: RabbitMQTopicClient) -> None:
+    def __init__(self, outbox: InMemoryOutbox, broker: FaultyRabbitClient) -> None:
         self._outbox = outbox
         self._broker = broker
 
-    def maybe_drop_message(self, *, drop_chance: float, event: NewsEvent, index: int, interval: float) -> bool:
-        # Simulate producer-side loss: event stays in outbox for later recovery.
-        if random.random() < drop_chance:
-            print(
-                "Queued in outbox without publish attempt: "
-                f"seq={index} topic={event.topic} id={event.id} title={event.title}"
-            )
-            time.sleep(interval)
-            return True
-        return False
-
-    def publish_pending(self) -> list[OutboxMessage]:
+    def publish_pending(self, *, index: int) -> list[OutboxMessage]:
         published_messages: list[OutboxMessage] = []
 
         for message in self._outbox.pending():
-            self._broker.publish(routing_key=message.topic, message=message.payload)
+            was_published = self._broker.publish(
+                routing_key=message.topic,
+                message=message.payload,
+                index=index,
+            )
 
-            self._outbox.mark_published(message.entry_id)
-            published_messages.append(message)
+            if was_published:
+                self._outbox.mark_published(message.id)
+                published_messages.append(message)
 
         return published_messages

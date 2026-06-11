@@ -5,6 +5,7 @@ import time
 
 from .config import AppSettings
 from .patterns.outbox import InMemoryOutbox, OutboxPublisher
+from .services.faulty_client import FaultyRabbitClient
 from .services.gemini_client import GeminiNewsGenerator
 from .services.messaging import BrokerUnavailableError, RabbitMQTopicClient
 from .services.producer import FantasyNewsProducer
@@ -22,10 +23,15 @@ def main() -> None:
 
     settings = AppSettings()
     broker = RabbitMQTopicClient(settings.rabbitmq)
+    faulty_broker = FaultyRabbitClient(
+        broker,
+        drop_chance=args.drop_chance,
+        duplicate_chance=args.duplicate_chance,
+    )
     generator = GeminiNewsGenerator(settings.gemini)
     outbox = InMemoryOutbox()
     producer = FantasyNewsProducer(generator=generator, outbox=outbox)
-    publisher = OutboxPublisher(outbox=outbox, broker=broker)
+    publisher = OutboxPublisher(outbox=outbox, broker=faulty_broker)
 
     index = 1
     try:
@@ -33,21 +39,8 @@ def main() -> None:
             topic = random.choice(topics)
             event = producer.create_event(topic)
 
-            if publisher.maybe_drop_message(
-                drop_chance=args.drop_chance,
-                event=event,
-                index=index,
-                interval=args.interval,
-            ):
-                continue
-
-            producer.maybe_create_duplicate(
-                duplicate_chance=args.duplicate_chance,
-                event=event,
-            )
-
             try:
-                published_messages = publisher.publish_pending()
+                published_messages = publisher.publish_pending(index=index)
             except BrokerUnavailableError as error:
                 print(
                     "RabbitMQ publish failed; keeping event in outbox for retry: "
@@ -69,7 +62,7 @@ def main() -> None:
     except KeyboardInterrupt:
         # Flush pending outbox messages before shutdown to reduce event loss.
         print("Stopping producer. Flushing pending outbox messages...")
-        remaining_messages = publisher.publish_pending()
+        remaining_messages = publisher.publish_pending(index=index, allow_faults=False)
         for message in remaining_messages:
             print(f"Recovered pending outbox message: topic={message.topic} id={message.id}")
     finally:
