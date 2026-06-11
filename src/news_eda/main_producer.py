@@ -49,12 +49,8 @@ def main() -> None:
                 time.sleep(args.interval)
                 continue
 
-            published_event_ids: set[str] = set()
             for message in published_messages:
                 print(f"Published from outbox: seq={index} topic={message.topic} id={message.id}")
-                if message.id in published_event_ids:
-                    print(f"Published duplicate from outbox: seq={index} topic={message.topic} id={message.id}")
-                published_event_ids.add(message.id)
 
             time.sleep(args.interval)
             index += 1

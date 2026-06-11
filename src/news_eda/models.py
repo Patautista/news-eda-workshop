@@ -31,6 +31,9 @@ class NewsEvent:
         return json.dumps(asdict(self), ensure_ascii=True)
 
     @classmethod
-    def from_json(cls, payload: bytes) -> "NewsEvent":
-        data = json.loads(payload.decode("utf-8"))
+    def from_json(cls, payload: bytes | str) -> "NewsEvent":
+        if isinstance(payload, bytes):
+            data = json.loads(payload.decode("utf-8"))
+        else:
+            data = json.loads(payload)
         return cls(**data)
