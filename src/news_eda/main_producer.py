@@ -5,6 +5,7 @@ import time
 
 from .config import AppSettings
 from .patterns.outbox import InMemoryOutbox, OutboxPublisher
+from .services.faulty_client import FaultyRabbitClient
 from .services.gemini_client import GeminiNewsGenerator
 from .services.messaging import BrokerUnavailableError, RabbitMQTopicClient
 from .services.producer import FantasyNewsProducer
@@ -22,9 +23,15 @@ def main() -> None:
 
     settings = AppSettings()
     broker = RabbitMQTopicClient(settings.rabbitmq)
+    faulty_broker = FaultyRabbitClient(
+        broker,
+        drop_chance=args.drop_chance,
+        duplicate_chance=args.duplicate_chance,
+    )
     generator = GeminiNewsGenerator(settings.gemini)
 
     # TODO: create an InMemoryOutbox
+    # TODO: create an FautlyRabbitClient, injecting the RabbitMQTopicClient and fault parameters
     # TODO: create a FantasyNewsProducer, injecting the generator and outbox
     # TODO: create an OutboxPublisher, injecting the outbox and broker
 

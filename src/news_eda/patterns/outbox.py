@@ -1,17 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-import random
-import time
-from uuid import uuid4
 
 from ..models import NewsEvent
-from ..services.messaging import RabbitMQTopicClient
+from ..services.faulty_client import FaultyRabbitClient
 
 
 @dataclass
 class OutboxMessage:
-    entry_id: str
     id: str
     topic: str
     payload: str
@@ -30,19 +26,19 @@ class InMemoryOutbox:
         # TODO: return only messages where published is False
         raise NotImplementedError
 
-    def mark_published(self, entry_id: str) -> None:
+    def mark_published(self, message_id: str) -> None:
         for message in self._messages:
-            if message.entry_id == entry_id:
+            if message.id == message_id:
                 message.published = True
                 return
 
 
 class OutboxPublisher:
-    def __init__(self, outbox: InMemoryOutbox, broker: RabbitMQTopicClient) -> None:
+    def __init__(self, outbox: InMemoryOutbox, broker: FaultyRabbitClient) -> None:
         self._outbox = outbox
         self._broker = broker
 
-    def publish_pending(self) -> list[OutboxMessage]:
+    def publish_pending(self, index: int) -> list[OutboxMessage]:
         # TODO: iterate over pending messages, publish each one via self._broker,
         # mark it published, and return the list of published messages
         raise NotImplementedError
