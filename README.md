@@ -66,14 +66,18 @@ RabbitMQ endpoints:
 - AMQP: `localhost:5672`
 - Management UI: `http://localhost:15672` (user/password: `guest`/`guest`)
 
+Topology UI endpoint:
+
+- Runtime diagram: `http://localhost:8080`
+
 ## Run Consumers (topic subscriptions)
 
 Open one terminal per consumer:
 
 ```bash
-python -m news_eda.main_consumer --name politics-feed --topic kingdom.politics
-python -m news_eda.main_consumer --name sports-feed --topic arena.sports
-python -m news_eda.main_consumer --name mixed-feed --topic guild.economy --topic wilds.weather
+python -m news_eda.main_consumer --name politics-feed --topics kingdom.politics
+python -m news_eda.main_consumer --name sports-feed --topics arena.sports
+python -m news_eda.main_consumer --name mixed-feed --topics guild.economy,wilds.weather
 ```
 
 ## Run Producer
@@ -92,3 +96,26 @@ python -m news_eda.main_producer --topic arena.sports --topic kingdom.politics -
 
 - Both producer and consumer CLIs only accept the known topic list shown above.
 - Messages are persisted (`delivery_mode=2`) and queues are durable.
+
+## Runtime Topology Diagram
+
+The stack includes an optional web UI service (`topology-ui`) that renders the
+currently running containers as a live architecture diagram:
+
+- producers on the left,
+- RabbitMQ in the center,
+- consumers on the right (including subscribed topics).
+
+It auto-refreshes and supports zoom in/out and pan interactions.
+
+Run it with the stack:
+
+```bash
+docker compose up --build
+```
+
+or only the UI service:
+
+```bash
+docker compose up --build topology-ui
+```

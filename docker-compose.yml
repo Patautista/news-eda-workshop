@@ -32,7 +32,7 @@ services:
       RABBITMQ_PASSWORD: guest
       RABBITMQ_VHOST: /
       RABBITMQ_EXCHANGE: fantasy.news.topic
-    command: ["python", "-m", "news_eda.main_producer", "--count", "10", "--interval", "2"]
+    command: ["python", "-m", "news_eda.main_producer", "--interval", "2"]
     restart: "no"
 
   consumer:
@@ -51,5 +51,16 @@ services:
       RABBITMQ_PASSWORD: guest
       RABBITMQ_VHOST: /
       RABBITMQ_EXCHANGE: fantasy.news.topic
-    command: ["python", "-m", "news_eda.main_consumer", "--name", "compose-consumer", "--topic", "kingdom.politics", "--topic", "arena.sports"]
+    command: ["python", "-m", "news_eda.main_consumer", "--name", "compose-consumer", "--topics", "kingdom.politics,arena.sports"]
+    restart: unless-stopped
+
+  topology-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.topology-ui
+    container_name: fantasy-news-topology-ui
+    ports:
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped

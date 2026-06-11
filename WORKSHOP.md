@@ -94,7 +94,7 @@ Start here. The repo already gives you a working producer/consumer example, whic
 ### Run one consumer
 
 ```bash
-python -m news_eda.main_consumer --name sports-feed --topic arena.sports
+python -m news_eda.main_consumer --name sports-feed --topics arena.sports
 ```
 
 ### Run one producer
