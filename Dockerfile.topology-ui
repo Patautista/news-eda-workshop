@@ -1,0 +1,20 @@
+FROM node:20-alpine AS web-build
+
+WORKDIR /app
+COPY topology-ui/package.json ./
+RUN npm install
+COPY topology-ui/ ./
+RUN npm run build
+
+FROM node:20-alpine
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY topology-ui/server/package.json ./server/
+RUN cd server && npm install --omit=dev
+COPY --from=web-build /app/dist ./dist
+COPY topology-ui/server ./server
+
+EXPOSE 8080
+CMD ["node", "server/index.js"]
