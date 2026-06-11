@@ -37,7 +37,7 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    command: ["python", "-m", "news_eda.main_consumer", "--name", "compose-consumer", "--topics", "kingdom.politics,arena.sports"]
+    command: ["python", "-m", "news_eda.main_consumer", "--name", "compose-consumer", "--topics", "arena.sports.#,wilds.weather"]
     restart: unless-stopped
 
   topology-ui:

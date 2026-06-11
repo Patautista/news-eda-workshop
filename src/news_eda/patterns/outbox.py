@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import random
+import time
+from uuid import uuid4
 
 from ..models import NewsEvent
 from ..services.messaging import RabbitMQTopicClient
@@ -8,6 +11,7 @@ from ..services.messaging import RabbitMQTopicClient
 
 @dataclass
 class OutboxMessage:
+    entry_id: str
     id: str
     topic: str
     payload: str
@@ -26,9 +30,11 @@ class InMemoryOutbox:
         # TODO: return only messages where published is False
         raise NotImplementedError
 
-    def mark_published(self, message_id: str) -> None:
-        # TODO: find the message by id and set published = True
-        raise NotImplementedError
+    def mark_published(self, entry_id: str) -> None:
+        for message in self._messages:
+            if message.entry_id == entry_id:
+                message.published = True
+                return
 
 
 class OutboxPublisher:

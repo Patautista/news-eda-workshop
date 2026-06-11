@@ -9,10 +9,10 @@ from .services.gemini_client import GeminiNewsGenerator
 from .services.messaging import BrokerUnavailableError, RabbitMQTopicClient
 from .services.producer import FantasyNewsProducer
 from .utils.parsing import build_producer_parser
-from .topics import KNOWN_TOPICS
+from .topics import get_concrete_topics
 
 
-DEFAULT_TOPICS = KNOWN_TOPICS
+DEFAULT_TOPICS = get_concrete_topics()
 
 
 def main() -> None:
