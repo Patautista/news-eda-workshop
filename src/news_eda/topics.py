@@ -1,20 +1,38 @@
 KNOWN_TOPICS = [
     "kingdom.politics",
+    "kingdom.politics.*",
+    "kingdom.politics.#",
     "kingdom.politics.gossip",
     "kingdom.politics.diplomacy",
     "kingdom.politics.elections",
     "kingdom.local_stories",
+    "kingdom.local_stories.*",
+    "kingdom.local_stories.#",
     "kingdom.local_stories.villages",
     "kingdom.local_stories.neighborhoods",
     "arena.sports",
+    "arena.sports.*",
+    "arena.sports.#",
     "arena.sports.jousting",
     "arena.sports.mage_duels",
     "arena.sports.racing",
     "guild.economy",
+    "guild.economy.*",
+    "guild.economy.#",
     "guild.economy.trade",
     "guild.economy.crafts",
     "guild.economy.labor",
     "wilds.weather",
     "arcane.science",
+    "arcane.science.*",
+    "arcane.science.#",
     "arcane.science.alchemy",
 ]
+
+
+def get_concrete_topics() -> list[str]:
+    """Return only concrete topics (exclude wildcard patterns with * or #).
+    
+    Wildcard patterns are for consumers; producers must publish to concrete topics.
+    """
+    return [topic for topic in KNOWN_TOPICS if "*" not in topic and "#" not in topic]
