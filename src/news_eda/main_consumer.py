@@ -14,8 +14,8 @@ def main() -> None:
     settings = AppSettings()
     broker = RabbitMQTopicClient(settings.rabbitmq)
 
-    # TODO: create an InMemoryInbox
     # TODO: create a TopicNewsConsumer, injecting name, topic_patterns, broker, and inbox
+    # TODO: create an InMemoryInbox
 
     try:
         # TODO: start the consumer
