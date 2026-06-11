@@ -23,54 +23,35 @@ def main() -> None:
     settings = AppSettings()
     broker = RabbitMQTopicClient(settings.rabbitmq)
     generator = GeminiNewsGenerator(settings.gemini)
-    outbox = InMemoryOutbox()
-    producer = FantasyNewsProducer(generator=generator, outbox=outbox)
-    publisher = OutboxPublisher(outbox=outbox, broker=broker)
+
+    # TODO: create an InMemoryOutbox
+    # TODO: create a FantasyNewsProducer, injecting the generator and outbox
+    # TODO: create an OutboxPublisher, injecting the outbox and broker
 
     index = 1
     try:
         while True:
             topic = random.choice(topics)
-            event = producer.create_event(topic)
 
-            # Simulate producer-side loss: event stays in outbox for later recovery.
-            if random.random() < args.drop_chance:
-                print(
-                    "Queued in outbox without publish attempt: "
-                    f"seq={index} topic={event.topic} id={event.id} title={event.title}"
-                )
-                time.sleep(args.interval)
-                continue
-
-            # Simulate at-least-once delivery by optionally republishing same message id.
-            publish_duplicates = set()
-            if random.random() < args.duplicate_chance:
-                publish_duplicates.add(event.id)
+            # TODO: call producer.create_event(topic) and capture the event
 
             try:
-                published_messages = publisher.publish_pending(duplicate_message_ids=publish_duplicates)
+                # TODO: call publisher.publish_pending() and capture published messages
+                pass
             except BrokerUnavailableError as error:
-                print(
-                    "RabbitMQ publish failed; keeping event in outbox for retry: "
-                    f"topic={event.topic} id={event.id} error={error}"
-                )
+                print(f"Publish failed, event stays in outbox: {error}")
                 time.sleep(args.interval)
                 continue
 
-            for message in published_messages:
-                print(f"Published from outbox: seq={index} topic={message.topic} id={message.id}")
-                if message.id in publish_duplicates:
-                    print(f"Published duplicate from outbox: seq={index} topic={message.topic} id={message.id}")
+            # TODO: print each published message
+            # Hint: use message.topic and message.id
 
             time.sleep(args.interval)
             index += 1
 
     except KeyboardInterrupt:
-        # Flush pending outbox messages before shutdown to reduce event loss.
         print("Stopping producer. Flushing pending outbox messages...")
-        remaining_messages = publisher.publish_pending()
-        for message in remaining_messages:
-            print(f"Recovered pending outbox message: topic={message.topic} id={message.id}")
+        # TODO: flush remaining outbox messages and print each one
     finally:
         broker.close()
 

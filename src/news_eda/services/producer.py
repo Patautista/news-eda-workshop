@@ -18,9 +18,5 @@ class FantasyNewsProducer:
             body=article["body"],
             source=article["source"],
         )
-        self._outbox.add_event(event)
-        return event
-
-    def generate_and_publish(self, topic: str) -> NewsEvent:
-        event = self.create_event(topic)
+        # TODO: add the event to the outbox
         return event

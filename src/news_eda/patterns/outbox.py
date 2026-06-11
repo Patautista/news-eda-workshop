@@ -19,22 +19,16 @@ class InMemoryOutbox:
         self._messages: list[OutboxMessage] = []
 
     def add_event(self, event: NewsEvent) -> None:
-        self._messages.append(
-            OutboxMessage(
-                id=event.id,
-                topic=event.topic,
-                payload=event.to_json(),
-            )
-        )
+        # TODO: wrap the event into an OutboxMessage and append it to self._messages
+        raise NotImplementedError
 
     def pending(self) -> list[OutboxMessage]:
-        return [message for message in self._messages if not message.published]
+        # TODO: return only messages where published is False
+        raise NotImplementedError
 
     def mark_published(self, message_id: str) -> None:
-        for message in self._messages:
-            if message.id == message_id:
-                message.published = True
-                return
+        # TODO: find the message by id and set published = True
+        raise NotImplementedError
 
 
 class OutboxPublisher:
@@ -42,17 +36,7 @@ class OutboxPublisher:
         self._outbox = outbox
         self._broker = broker
 
-    def publish_pending(self, duplicate_message_ids: set[str] | None = None) -> list[OutboxMessage]:
-        duplicate_message_ids = duplicate_message_ids or set()
-        published_messages: list[OutboxMessage] = []
-
-        for message in self._outbox.pending():
-            self._broker.publish(routing_key=message.topic, message=message.payload)
-
-            if message.id in duplicate_message_ids:
-                self._broker.publish(routing_key=message.topic, message=message.payload)
-
-            self._outbox.mark_published(message.id)
-            published_messages.append(message)
-
-        return published_messages
+    def publish_pending(self) -> list[OutboxMessage]:
+        # TODO: iterate over pending messages, publish each one via self._broker,
+        # mark it published, and return the list of published messages
+        raise NotImplementedError

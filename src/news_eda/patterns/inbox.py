@@ -6,7 +6,9 @@ class InMemoryInbox:
         self._processed_ids: set[str] = set()
 
     def has_processed(self, message_id: str) -> bool:
-        return message_id in self._processed_ids
+        # TODO: return True if message_id is already in the processed set
+        raise NotImplementedError
 
     def mark_processed(self, message_id: str) -> None:
-        self._processed_ids.add(message_id)
+        # TODO: add message_id to the processed set
+        raise NotImplementedError

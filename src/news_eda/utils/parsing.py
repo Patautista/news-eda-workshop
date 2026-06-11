@@ -5,13 +5,6 @@ import argparse
 from ..topics import KNOWN_TOPICS
 
 
-def chance(value: str) -> float:
-    parsed = float(value)
-    if not 0 <= parsed <= 1:
-        raise argparse.ArgumentTypeError("Chance values must be between 0 and 1.")
-    return parsed
-
-
 def build_producer_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Publish mock fantasy news events.")
     parser.add_argument(
@@ -26,18 +19,6 @@ def build_producer_parser() -> argparse.ArgumentParser:
         type=float,
         default=1.5,
         help="Seconds between messages.",
-    )
-    parser.add_argument(
-        "--duplicate-chance",
-        type=chance,
-        default=0.25,
-        help="Chance that a published event is intentionally published twice.",
-    )
-    parser.add_argument(
-        "--drop-chance",
-        type=chance,
-        default=0.2,
-        help="Chance that an intended event is generated but intentionally not published.",
     )
     return parser
 

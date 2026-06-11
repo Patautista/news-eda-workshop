@@ -13,16 +13,13 @@ def main() -> None:
     # Entry point wires dependencies only; TopicNewsConsumer owns runtime behavior.
     settings = AppSettings()
     broker = RabbitMQTopicClient(settings.rabbitmq)
-    inbox = InMemoryInbox()
-    consumer = TopicNewsConsumer(
-        name=args.name,
-        topic_patterns=args.topics,
-        broker=broker,
-        inbox=inbox,
-    )
+
+    # TODO: create an InMemoryInbox
+    # TODO: create a TopicNewsConsumer, injecting name, topic_patterns, broker, and inbox
 
     try:
-        consumer.start()
+        # TODO: start the consumer
+        pass
     finally:
         broker.close()
 
