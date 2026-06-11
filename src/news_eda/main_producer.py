@@ -31,7 +31,6 @@ def build_parser() -> argparse.ArgumentParser:
         choices=KNOWN_TOPICS,
         help="Routing key topic to publish to; can be repeated.",
     )
-    parser.add_argument("--count", type=int, default=5, help="Number of events to publish.")
     parser.add_argument(
         "--interval",
         type=float,
@@ -64,8 +63,9 @@ def main() -> None:
     producer = FantasyNewsProducer(generator=generator, outbox=outbox)
     publisher = OutboxPublisher(outbox=outbox, broker=broker)
 
+    index = 1
     try:
-        for index in range(1, args.count + 1):
+        while True:
             topic = random.choice(topics)
             event = producer.create_event(topic)
 
@@ -88,7 +88,10 @@ def main() -> None:
                     print(f"Published duplicate from outbox: seq={index} topic={message.topic} id={message.id}")
 
             time.sleep(args.interval)
+            index += 1
 
+    except KeyboardInterrupt:
+        print("Stopping producer. Flushing pending outbox messages...")
         remaining_messages = publisher.publish_pending()
         for message in remaining_messages:
             print(f"Recovered pending outbox message: topic={message.topic} id={message.id}")
