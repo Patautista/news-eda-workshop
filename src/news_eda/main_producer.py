@@ -36,7 +36,8 @@ def main() -> None:
             # TODO: call producer.create_event(topic) and capture the event
 
             try:
-                # TODO: call publisher.publish_pending() and capture published messages
+                # TODO: VERS-1 broker.publish(routing_key=topic, message=message.payload)
+                # TODO: VERS-2 call publisher.publish_pending() and capture published messages
                 pass
             except BrokerUnavailableError as error:
                 print(f"Publish failed, event stays in outbox: {error}")
