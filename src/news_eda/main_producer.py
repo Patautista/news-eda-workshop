@@ -15,26 +15,6 @@ from .topics import KNOWN_TOPICS
 DEFAULT_TOPICS = KNOWN_TOPICS
 
 
-def maybe_drop_message(*, drop_chance: float, event: object, index: int, interval: float) -> bool:
-    # Simulate producer-side loss: event stays in outbox for later recovery.
-    if random.random() < drop_chance:
-        print(
-            "Queued in outbox without publish attempt: "
-            f"seq={index} topic={event.topic} id={event.id} title={event.title}"
-        )
-        time.sleep(interval)
-        return True
-    return False
-
-
-def maybe_send_duplicate(*, duplicate_chance: float, event: object) -> set[str]:
-    # Simulate at-least-once delivery by optionally republishing same message id.
-    publish_duplicates: set[str] = set()
-    if random.random() < duplicate_chance:
-        publish_duplicates.add(event.id)
-    return publish_duplicates
-
-
 def main() -> None:
     args = build_producer_parser().parse_args()
     # If no topics are provided, cycle through the full known topic set.
@@ -53,7 +33,7 @@ def main() -> None:
             topic = random.choice(topics)
             event = producer.create_event(topic)
 
-            if maybe_drop_message(
+            if publisher.maybe_drop_message(
                 drop_chance=args.drop_chance,
                 event=event,
                 index=index,
@@ -61,13 +41,13 @@ def main() -> None:
             ):
                 continue
 
-            publish_duplicates = maybe_send_duplicate(
+            producer.maybe_create_duplicate(
                 duplicate_chance=args.duplicate_chance,
                 event=event,
             )
 
             try:
-                published_messages = publisher.publish_pending(duplicate_message_ids=publish_duplicates)
+                published_messages = publisher.publish_pending()
             except BrokerUnavailableError as error:
                 print(
                     "RabbitMQ publish failed; keeping event in outbox for retry: "
@@ -76,10 +56,12 @@ def main() -> None:
                 time.sleep(args.interval)
                 continue
 
+            published_event_ids: set[str] = set()
             for message in published_messages:
                 print(f"Published from outbox: seq={index} topic={message.topic} id={message.id}")
-                if message.id in publish_duplicates:
+                if message.id in published_event_ids:
                     print(f"Published duplicate from outbox: seq={index} topic={message.topic} id={message.id}")
+                published_event_ids.add(message.id)
 
             time.sleep(args.interval)
             index += 1
